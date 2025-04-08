@@ -86,7 +86,7 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
       }
     }
 
-    const headerY = config.logoBase ? logoY + logoHeight + 10 : 10;
+    const headerY = config.logoBase ? logoY + logoHeight + 10 : 25;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -103,27 +103,20 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
     if (config.companyPhone)
       doc.text(config.companyPhone, 20, companyStartY + 20);
 
-    doc.setFont("helvetica", "bold");
-    const balanceStartY = companyStartY + 30;
-    doc.text("Balance Due", 160, balanceStartY);
-    doc.setTextColor(255, 0, 0);
-    doc.text(formatCurrency(calculateTotal()), 160, balanceStartY + 10);
-    doc.setTextColor(0, 0, 0);
-
-    const lineY = balanceStartY + 20;
+    const lineY = companyStartY + 30; // Adjusted since "Balance Due" is removed
     doc.line(20, lineY, 190, lineY);
 
     doc.setFont("helvetica", "bold");
     const detailsStartY = lineY + 10;
     doc.text("BILLED TO", 20, detailsStartY);
-    doc.text("INVOICE DATE", 100, detailsStartY);
-    doc.text("DUE DATE", 160, detailsStartY);
+    doc.text("RECEIPT DATE", 100, detailsStartY); // Changed from "INVOICE DATE"
+    doc.text("DUE DATE", 160, detailsStartY); // Kept for reference, can remove if not needed
 
     doc.setFont("helvetica", "normal");
     doc.text(config.customerName, 20, detailsStartY + 10);
     if (config.customerAddress)
       doc.text(config.customerAddress, 20, detailsStartY + 20);
-    doc.text(config.invoiceDate, 100, detailsStartY + 10);
+    doc.text(config.invoiceDate, 100, detailsStartY + 10); // Assuming this is the payment date
     doc.text(config.dueDate, 160, detailsStartY + 10);
 
     const tableColumn = [
@@ -182,12 +175,7 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
     doc.setFont("helvetica", "bold");
     doc.setFillColor(200, 200, 200);
     doc.rect(labelX, yPosition - 5, 80, 10, "F");
-    doc.text("Total [NGN]:", labelX, yPosition);
-    doc.text(formatCurrency(total), amountX, yPosition, { align: "right" });
-
-    yPosition += rowSpacing + 5;
-    doc.setFont("helvetica", "normal");
-    doc.text("Balance Due:", labelX, yPosition);
+    doc.text("Total Paid [NGN]:", labelX, yPosition); // Changed to "Total Paid"
     doc.text(formatCurrency(total), amountX, yPosition, { align: "right" });
 
     doc.setFontSize(10);
@@ -201,18 +189,18 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
     doc.setTextColor(0, 102, 204);
     doc.text("Powered by e/emie", 20, doc.internal.pageSize.height - 20);
 
-    doc.save(`Invoice_${config.customerName}.pdf`);
+    doc.save(`Receipt_${config.customerName}.pdf`); // Changed filename to "Receipt"
   };
 
   return (
     <div className="p-4 max-w-lg mx-auto">
-      <h2 className="text-xl mb-4 font-bold">Invoice Generator</h2>
+      <h2 className="text-xl mb-4 font-bold">Receipt Generator</h2>
       <button
         onClick={generatePDF}
         className="p-2 bg-green-500 text-white rounded w-full"
         disabled={!config}
       >
-        Download Invoice
+        Download Receipt
       </button>
     </div>
   );
