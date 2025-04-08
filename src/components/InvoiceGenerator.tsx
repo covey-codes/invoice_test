@@ -20,6 +20,7 @@ interface InvoiceConfig {
   vat: string;
   items: Item[];
   thankYouMessage?: string;
+  logoBase?: string;
 }
 
 interface InvoiceGeneratorProps {
@@ -61,35 +62,69 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const logoWidth = 10;
+    const logoHeight = 10;
+    const logoX = (pageWidth - logoWidth) / 2;
+    const logoY = 10;
+
+    if (config.logoBase) {
+      try {
+        const imgFormat = config.logoBase.startsWith("data:image/jpeg")
+          ? "JPEG"
+          : "PNG";
+        doc.addImage(
+          config.logoBase,
+          imgFormat,
+          logoX,
+          logoY,
+          logoWidth,
+          logoHeight
+        );
+      } catch (error) {
+        console.warn("Failed to render logo image:", error);
+      }
+    }
+
+    const headerY = config.logoBase ? logoY + logoHeight + 10 : 10;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text("INVOICE", 160, 20);
+    doc.setTextColor(0, 102, 204);
+    doc.text("INVOICE", 160, headerY);
+    doc.setTextColor(0, 0, 0);
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text(config.companyName, 20, 30);
-    if (config.companyAddress) doc.text(config.companyAddress, 20, 40);
-    if (config.companyPhone) doc.text(config.companyPhone, 20, 50);
+    const companyStartY = headerY + 10;
+    doc.text(config.companyName, 20, companyStartY);
+    if (config.companyAddress)
+      doc.text(config.companyAddress, 20, companyStartY + 10);
+    if (config.companyPhone)
+      doc.text(config.companyPhone, 20, companyStartY + 20);
 
     doc.setFont("helvetica", "bold");
-    doc.text("Balance Due", 160, 35);
-    doc.setTextColor(0, 102, 204);
-    doc.text(formatCurrency(calculateTotal()), 160, 45);
+    const balanceStartY = companyStartY + 30;
+    doc.text("Balance Due", 160, balanceStartY);
+    doc.setTextColor(255, 0, 0);
+    doc.text(formatCurrency(calculateTotal()), 160, balanceStartY + 10);
     doc.setTextColor(0, 0, 0);
 
-    doc.line(20, 65, 190, 65);
+    const lineY = balanceStartY + 20;
+    doc.line(20, lineY, 190, lineY);
 
     doc.setFont("helvetica", "bold");
-    doc.text("BILLED TO", 20, 75);
-    doc.text("INVOICE DATE", 100, 75);
-    doc.text("DUE DATE", 160, 75);
+    const detailsStartY = lineY + 10;
+    doc.text("BILLED TO", 20, detailsStartY);
+    doc.text("INVOICE DATE", 100, detailsStartY);
+    doc.text("DUE DATE", 160, detailsStartY);
 
     doc.setFont("helvetica", "normal");
-    doc.text(config.customerName, 20, 85);
-    if (config.customerAddress) doc.text(config.customerAddress, 20, 95);
-    doc.text(config.invoiceDate, 100, 85);
-    doc.text(config.dueDate, 160, 85);
+    doc.text(config.customerName, 20, detailsStartY + 10);
+    if (config.customerAddress)
+      doc.text(config.customerAddress, 20, detailsStartY + 20);
+    doc.text(config.invoiceDate, 100, detailsStartY + 10);
+    doc.text(config.dueDate, 160, detailsStartY + 10);
 
     const tableColumn = [
       "#",
@@ -111,7 +146,7 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 105,
+      startY: detailsStartY + 30,
       theme: "grid",
       styles: { fontSize: 10, cellPadding: 5 },
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
@@ -163,7 +198,7 @@ const InvoiceGenerator = ({ config }: InvoiceGeneratorProps) => {
       doc.internal.pageSize.height - 30
     );
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(200, 0, 0);
+    doc.setTextColor(0, 102, 204);
     doc.text("Powered by e/emie", 20, doc.internal.pageSize.height - 20);
 
     doc.save(`Invoice_${config.customerName}.pdf`);
